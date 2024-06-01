@@ -10,6 +10,7 @@ module Kstream = Markup__Kstream
 let sprintf = Printf.sprintf
 
 let wrong_k message = fun _ -> assert_failure message
+let (~+) = Markup.exhaust_trampoline
 
 let with_text_limit n f =
   let limit = !Text.length_limit in
@@ -72,7 +73,7 @@ let expect_sequence ?(prefix = false) id to_string sequence =
         end;
 
         match rest, prefix with
-        | [], true -> throw Exit
+        | [], true -> +throw Exit
         | _ -> ()
   in
 
@@ -89,10 +90,10 @@ let expect_sequence ?(prefix = false) id to_string sequence =
   receive, ended
 
 let iter iterate s =
-  Kstream.iter iterate s (function
-    | Exit -> ()
+  +Kstream.iter iterate s (function
+    | Exit -> Done
     | exn -> raise exn)
-    ignore
+    (fun _ -> Done)
 
 type 'a general_signal = S of 'a | E of Error.t
 

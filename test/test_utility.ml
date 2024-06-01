@@ -18,6 +18,8 @@ let doctype =
 let start_element name = `Start_element ((Markup.Ns.html, name), [])
 
 let ok = wrong_k "failed"
+let done_ f = fun a -> f a; Markup.Done
+let (~+) = Markup.exhaust_trampoline
 
 type dom =
   | Text of string
@@ -39,7 +41,7 @@ let tests = [
     |> Kstream.of_list
     |> Markup__Utility.strings_to_bytes
     |> fun s ->
-      Kstream.to_list s ok (assert_equal ['f'; 'o'; 'o'; 'b'; 'a'; 'r']));
+       +Kstream.to_list s ok (done_ (assert_equal ['f'; 'o'; 'o'; 'b'; 'a'; 'r'])));
 
   ("utility.tree" >:: fun _ ->
     [start_element "a";

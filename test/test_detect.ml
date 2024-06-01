@@ -9,16 +9,18 @@ open Markup__Stream_io
 open Markup__Detect
 
 let ok = wrong_k "failed"
+let (~+) = Markup.exhaust_trampoline
+let assert_equal' ?msg a b = assert_equal ?msg a b; Markup.Done
 
 let _check_rewound chars s =
   if String.length s > 0 then
-    next_option chars ok (assert_equal (Some s.[0]))
+    +next_option chars ok (assert_equal' (Some s.[0]))
   else
-    next_option chars ok (assert_equal None)
+    +next_option chars ok (assert_equal' None)
 
 let _check_encoding_guess f s guess =
   let chars = string s in
-  f chars ok (assert_equal guess);
+  +f chars ok (assert_equal' guess);
   _check_rewound chars s
 
 let tests = [
@@ -79,7 +81,7 @@ let tests = [
   ("detect.meta_tag_prescan" >:: fun _ ->
     let check ?supported ?limit s result =
       let chars = string s in
-      meta_tag_prescan ?supported ?limit chars ok (assert_equal result);
+      +meta_tag_prescan ?supported ?limit chars ok (assert_equal' result);
       _check_rewound chars s
     in
 
@@ -182,7 +184,7 @@ let tests = [
   ("detect.read_xml_encoding_declaration" >:: fun _ ->
     let check family s result =
       let chars = string s in
-      read_xml_encoding_declaration chars family ok (assert_equal result);
+      +read_xml_encoding_declaration chars family ok (assert_equal' result);
       _check_rewound chars s
     in
 

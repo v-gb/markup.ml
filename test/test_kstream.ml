@@ -12,7 +12,22 @@ let then_exn l =
   (fun throw _ k -> next s throw (fun () -> throw exn) k) |> make
 
 let failed_wrong = wrong_k "failed"
+let assert_equal' = assert_equal
+let assert_equal ?msg a b = assert_equal ?msg a b; Markup.Done
 let failed = assert_equal exn
+let ignore _ = Markup.Done
+let done_ f = fun a -> f a; Markup.Done
+let (~+) = Markup.exhaust_trampoline
+let next a b c d = +next a b c d
+let next_option a b c = +next_option a b c
+let next_expected a b c = +next_expected a b c
+let next_n a b c d = +next_n a b c d
+let to_list a b c = +to_list a b c
+let peek a b c d = +peek a b c d
+let peek_option a b c = +peek_option a b c
+let peek_expected a b c = +peek_expected a b c
+let peek_n a b c d = +peek_n a b c d
+let fold a b c d e = +fold a b c d e
 
 let internal_tests = [
   ("kstream.internal.make" >:: fun _ ->
@@ -167,14 +182,14 @@ let internal_tests = [
     next s failed_wrong ignore ignore;
     restore ();
     to_list s failed_wrong ignore;
-    assert_equal (Buffer.contents buffer) "foob");
+    assert_equal' (Buffer.contents buffer) "foob");
 
   ("kstream.internal.tap.exn" >:: fun _ ->
     let buffer = Buffer.create 4 in
     let s = then_exn ['f'; 'o'; 'o'; 'b'] in
-    (tap (Buffer.add_char buffer) s |> ignore) [@ocaml.warning "-5"];
+    (tap (Buffer.add_char buffer) s |> Stdlib.ignore) [@ocaml.warning "-5"];
     to_list s failed (wrong_k "did not fail");
-    assert_equal (Buffer.contents buffer) "foob");
+    assert_equal' (Buffer.contents buffer) "foob");
 
   ("kstream.internal.checkpoint" >:: fun _ ->
     let s = of_list [1; 2; 3] in
@@ -192,7 +207,7 @@ let internal_tests = [
 
   ("kstream.internal.checkpoint.exn" >:: fun _ ->
     let s = then_exn [1; 2; 3] in
-    checkpoint s |> ignore;
+    checkpoint s |> Stdlib.ignore;
     to_list s failed (wrong_k "did not fail"));
 
   ("kstream.internal.construct" >:: fun _ ->
@@ -219,8 +234,8 @@ let internal_tests = [
     in
     next_option s failed_wrong (assert_equal (Some 1));
     next_option s failed_wrong (assert_equal (Some 2));
-    assert_equal ~msg:"constructor 1" !constructor1_calls 1;
-    assert_equal ~msg:"constructor 2" !constructor2_calls 1);
+    assert_equal' ~msg:"constructor 1" !constructor1_calls 1;
+    assert_equal' ~msg:"constructor 2" !constructor2_calls 1);
 
   ("kstream.internal.map" >:: fun _ ->
     let s = of_list [1; 2; 3] |> map (fun v _ k -> k (v + 1)) in
@@ -257,15 +272,15 @@ let internal_tests = [
 
   ("kstream.internal.iter" >:: fun _ ->
     let sum = ref 0 in
-    iter (fun v _ k -> sum := !sum + v; k ()) (of_list [1; 2; 3]) failed_wrong
+    +iter (fun v _ k -> sum := !sum + v; k ()) (of_list [1; 2; 3]) failed_wrong
       ignore;
-    assert_equal !sum 6);
+    assert_equal' !sum 6);
 
   ("kstream.internal.iter.exn" >:: fun _ ->
-    iter (fun v _ k -> k (ignore v)) (then_exn [1; 2; 3]) failed
+    +iter (fun v _ k -> k (Stdlib.ignore v)) (then_exn [1; 2; 3]) failed
       (wrong_k "did not fail");
 
-    iter (fun _ throw _ -> throw exn) (of_list [1; 2; 3]) failed
+    +iter (fun _ throw _ -> throw exn) (of_list [1; 2; 3]) failed
       (wrong_k "did not fail"));
 
   ("kstream.internal.filter_map" >:: fun _ ->
@@ -311,14 +326,16 @@ let internal_tests = [
         else k (count + 1))
       0 s
       (function
-        | Exit -> ()
+        | Exit -> Done
         | exn -> raise exn)
       (wrong_k "finished"))
 ]
 
 open Markup
 
-let synchronous_interface_tests = [
+let synchronous_interface_tests =
+  let assert_equal = assert_equal' in
+[
   ("kstream.sync.stream,next" >:: fun _ ->
     let emitted = ref false in
     let s =
@@ -343,9 +360,9 @@ let synchronous_interface_tests = [
     let s = of_list [1; 2; 3] in
     peek s |> assert_equal ~msg:"1" (Some 1);
     peek s |> assert_equal ~msg:"1 again" (Some 1);
-    next s |> ignore;
+    next s |> Stdlib.ignore;
     peek s |> assert_equal ~msg:"2" (Some 2);
-    to_list s |> ignore;
+    to_list s |> Stdlib.ignore;
     peek s |> assert_equal ~msg:"empty" None);
 
   ("kstream.sync.fold" >:: fun _ ->

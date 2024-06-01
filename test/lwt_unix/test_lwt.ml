@@ -12,6 +12,8 @@ open Markup_lwt
 open Markup_lwt_unix
 
 let self = "./test_lwt.ml"
+let (~+) = Markup.exhaust_trampoline
+let wrong_k s a = +wrong_k s a
 
 let suite =
   "markup_lwt" >::: Test_asynchronous.tests @ [

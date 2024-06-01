@@ -11,6 +11,9 @@ open Markup__Encoding
 open Markup__Input
 
 let ok = wrong_k "failed"
+let (~+) = Markup.exhaust_trampoline
+let assert_equal' ?msg a b = assert_equal ?msg a b; Markup.Done
+let to_list a b c = +to_list a b c
 
 let tests = [
   ("input.xml" >:: fun _ ->
@@ -22,7 +25,7 @@ let tests = [
         |> preprocess is_valid_xml_char report
       in
 
-      to_list s ok (assert_equal [
+      to_list s ok (assert_equal' [
         (1, 1), 0x66;
         (1, 2), 0x6F;
         (1, 3), 0x0A;
@@ -56,7 +59,7 @@ let tests = [
         |> preprocess is_valid_html_char report
       in
 
-      to_list s ok (assert_equal [
+      to_list s ok (assert_equal' [
         (1, 1), 0x66;
         (1, 2), 0x6F;
         (1, 3), 0x6F;
@@ -75,5 +78,5 @@ let tests = [
     |> of_list
     |> preprocess is_valid_xml_char Markup__Error.ignore_errors
     |> fst
-    |> fun s -> to_list s ok (assert_equal [(1, 1), 0x66]))
+    |> fun s -> to_list s ok (assert_equal' [(1, 1), 0x66]))
 ]

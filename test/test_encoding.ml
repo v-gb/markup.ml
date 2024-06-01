@@ -10,6 +10,12 @@ open Markup__Stream_io
 open Markup__Encoding
 
 let ok = wrong_k "failed"
+let assert_equal ?msg a b = assert_equal ?msg a b; Markup.Done
+let (~+) = Markup.exhaust_trampoline
+let next a b c d = +next a b c d
+let next_option a b c = +next_option a b c
+let next_expected a b c = +next_expected a b c
+let next_n a b c d = +next_n a b c d
 
 let test_ucs_4 (f : Markup__Encoding.t) name s1 s2 bad_bytes =
   expect_error (1, 2) (`Decoding_error (bad_bytes, name))
