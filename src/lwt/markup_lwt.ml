@@ -9,7 +9,10 @@ let to_cps thread =
     match Lwt.state thread with
     | Lwt.Return x -> k x
     | Lwt.Fail e -> throw e
-    | Lwt.Sleep -> Lwt.on_any thread k throw
+    | Lwt.Sleep -> Lwt.on_any thread
+                     (fun a -> Markup.exhaust_trampoline (k a))
+                     (fun a -> Markup.exhaust_trampoline (throw a));
+                   Done
 
 module Adapter =
 struct
@@ -19,7 +22,9 @@ struct
 
   let of_cps f =
     let thread, wake = Lwt.wait () in
-    f (Lwt.wakeup_later_exn wake) (Lwt.wakeup_later wake);
+    Markup.exhaust_trampoline
+      (f (fun a -> Lwt.wakeup_later_exn wake a; Markup.Done)
+         (fun a -> Lwt.wakeup_later wake a; Markup.Done));
     thread
 
   let to_cps = to_cps

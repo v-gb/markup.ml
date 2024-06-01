@@ -19,11 +19,11 @@ open Common
 
 type 'a t
 
-val make : (exn cont -> unit cont -> 'a cont -> unit) -> 'a t
+val make : (exn cont -> unit cont -> 'a cont -> trampoline) -> 'a t
 val construct : 'a t cps -> 'a t
 val empty : unit -> 'a t
 
-val next : 'a t -> exn cont -> unit cont -> 'a cont -> unit
+val next : 'a t -> exn cont -> unit cont -> 'a cont -> trampoline
 val next_option : 'a t -> 'a option cps
 val next_expected : 'a t -> 'a cps
 val next_n : int -> 'a t -> 'a list cps
@@ -32,7 +32,7 @@ val push : 'a t -> 'a -> unit
 val push_option : 'a t -> 'a option -> unit
 val push_list : 'a t -> 'a list -> unit
 
-val peek : 'a t -> exn cont -> unit cont -> 'a cont -> unit
+val peek : 'a t -> exn cont -> unit cont -> 'a cont -> trampoline
 val peek_option : 'a t -> 'a option cps
 val peek_expected : 'a t -> 'a cps
 val peek_n : int -> 'a t -> 'a list cps

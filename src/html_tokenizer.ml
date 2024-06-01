@@ -107,9 +107,9 @@ let tokenize report (input, get_location) =
     | Some name -> Buffer.contents name_buffer = name
   in
 
-  let throw = ref (fun _ -> ()) in
-  let ended = ref (fun _ -> ()) in
-  let output = ref (fun _ -> ()) in
+  let throw = ref done_cont in
+  let ended = ref done_cont in
+  let output = ref done_cont in
 
   let rec current_state = ref data_state
 

@@ -670,7 +670,7 @@ end
 
 
 
-type mode = unit -> unit
+type mode = unit cont
 
 (* Stack of template insertion modes. *)
 module Template :
@@ -683,7 +683,7 @@ sig
   val pop : t -> unit
 end =
 struct
-  type t = (unit -> unit) list ref
+  type t = mode list ref
 
   let create () = ref []
 
@@ -1016,9 +1016,9 @@ end
 let parse requested_context report (tokens, set_tokenizer_state, set_foreign) =
   let context = Context.uninitialized () in
 
-  let throw = ref (fun _ -> ()) in
-  let ended = ref (fun _ -> ()) in
-  let output = ref (fun _ -> ()) in
+  let throw = ref done_cont in
+  let ended = ref done_cont in
+  let output = ref done_cont in
 
   let report_if = Error.report_if report in
   let unmatched_end_tag l name k =

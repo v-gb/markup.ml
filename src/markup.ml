@@ -3,13 +3,15 @@
 
 
 
+type trampoline = Common.trampoline = Done | Go_back of (unit -> trampoline)
+let exhaust_trampoline = Common.exhaust_trampoline
 module type IO =
 sig
   type 'a t
 
   val return : 'a -> 'a t
-  val of_cps : ((exn -> unit) -> ('a -> unit) -> unit) -> 'a t
-  val to_cps : (unit -> 'a t) -> ((exn -> unit) -> ('a -> unit) -> unit)
+  val of_cps : ((exn -> trampoline) -> ('a -> trampoline) -> trampoline) -> 'a t
+  val to_cps : (unit -> 'a t) -> ((exn -> trampoline) -> ('a -> trampoline) -> trampoline)
 end
 
 module Synchronous : IO with type 'a t = 'a =
@@ -22,7 +24,8 @@ struct
 
   let of_cps f =
     let result = ref None in
-    f raise (fun v -> result := Some v);
+    Common.exhaust_trampoline
+      (f raise (fun v -> result := Some v; Done));
     match !result with
     | None -> raise Not_synchronous
     | Some v -> v

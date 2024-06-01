@@ -3,7 +3,7 @@
 
 open Common
 
-type 'a t = {mutable f : exn cont -> unit cont -> 'a cont -> unit}
+type 'a t = {mutable f : exn cont -> unit cont -> 'a cont -> trampoline}
 
 let make f = {f}
 

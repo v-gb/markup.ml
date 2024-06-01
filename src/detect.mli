@@ -14,7 +14,7 @@ val guess_from_bom_html : char Kstream.t -> string option cps
 val guess_from_bom_xml : char Kstream.t -> string option cps
 val guess_family_xml : char Kstream.t -> string option cps
 val meta_tag_prescan :
-  ?supported:(string -> bool cont -> unit) ->
+  ?supported:(string -> bool cont cont) ->
   ?limit:int ->
   char Kstream.t ->
     string option cps

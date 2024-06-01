@@ -1,8 +1,17 @@
 (* This file is part of Markup.ml, released under the MIT license. See
    LICENSE.md for details, or visit https://github.com/aantron/markup.ml. *)
 
-type 'a cont = 'a -> unit
-type 'a cps = exn cont -> 'a cont -> unit
+type trampoline = Done | Go_back of (unit -> trampoline)
+type 'a cont = 'a -> trampoline
+type 'a cps = exn cont -> 'a cont -> trampoline
+let done_cont = fun _ -> Done
+let exhaust_trampoline trampoline =
+  let r = ref trampoline in
+  while
+    match !r with
+    | Done -> false
+    | Go_back f -> r := f (); true
+  do () done
 
 type location = int * int
 

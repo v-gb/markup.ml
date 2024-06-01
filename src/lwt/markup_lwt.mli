@@ -34,6 +34,6 @@ val ensure_tail_calls : ?hook:((exn -> unit) ref) -> unit -> unit
 
 (**/**)
 
-val to_cps : (unit -> 'a Lwt.t) -> (exn -> unit) -> ('a -> unit) -> unit
+val to_cps : (unit -> 'a Lwt.t) -> (exn -> trampoline) -> ('a -> trampoline) -> trampoline
 
 (**/**)

@@ -13,9 +13,9 @@ let parse context namespace report tokens =
   let is_fragment = ref false in
   let fragment_allowed = ref true in
 
-  let throw = ref (fun _ -> ()) in
-  let ended = ref (fun _ -> ()) in
-  let output = ref (fun _ -> ()) in
+  let throw = ref done_cont in
+  let ended = ref done_cont in
+  let output = ref done_cont in
 
   let rec current_state = ref (fun () ->
     match context with

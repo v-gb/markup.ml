@@ -60,9 +60,9 @@ let tokenize report resolve_reference (input, get_location) =
 
   let report_if = Error.report_if report in
 
-  let throw = ref (fun _ -> ()) in
-  let ended = ref (fun _ -> ()) in
-  let output = ref (fun _ -> ()) in
+  let throw = ref done_cont in
+  let ended = ref done_cont in
+  let output = ref done_cont in
 
   let parse_reference l' k =
     let input, restore = checkpoint input in

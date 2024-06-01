@@ -780,13 +780,16 @@ end
 
 (**/**)
 
+type trampoline = Common.trampoline = Done | Go_back of (unit -> trampoline)
+val exhaust_trampoline : trampoline -> unit
+                                  
 module type IO =
 sig
   type 'a t
 
   val return : 'a -> 'a t
-  val of_cps : ((exn -> unit) -> ('a -> unit) -> unit) -> 'a t
-  val to_cps : (unit -> 'a t) -> ((exn -> unit) -> ('a -> unit) -> unit)
+  val of_cps : ((exn -> trampoline) -> ('a -> trampoline) -> trampoline) -> 'a t
+  val to_cps : (unit -> 'a t) -> ((exn -> trampoline) -> ('a -> trampoline) -> trampoline)
 end
 
 (**/**)
