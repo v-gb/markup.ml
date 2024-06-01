@@ -3,26 +3,34 @@
 
 open Common
 
-type 'a t = {mutable f : exn cont -> unit cont -> 'a cont -> trampoline}
+type 'a t = {mutable ff : exn cont -> unit cont -> 'a cont -> trampoline}
 
-let make f = {f}
+let make f = {ff = f}
+let f =
+  match Sys.backend_type with
+  | Other "js_of_ocaml" ->
+     fun {ff} -> (fun throw e k ->
+       ff (fun a -> Go_back (fun () -> throw a))
+         (fun a -> Go_back (fun () -> e a))
+         (fun a -> Go_back (fun () -> k a)))
+  | _ -> fun {ff} -> ff
 
 let construct c =
   let s = ref None in
   (fun throw e k ->
     match !s with
-    | None -> c throw (fun s' -> s := Some s'; s'.f throw e k)
-    | Some s' -> s'.f throw e k)
+    | None -> c throw (fun s' -> s := Some s'; f s' throw e k)
+    | Some s' -> f s' throw e k)
   |> make
 
 let empty () = (fun _ e _ -> e ()) |> make
 
-let next {f} throw e k = f throw e k
+let next t throw e k = (f t) throw e k
 
-let next_option {f} throw k = f throw (fun () -> k None) (fun v -> k (Some v))
+let next_option t throw k = (f t) throw (fun () -> k None) (fun v -> k (Some v))
 
-let next_expected {f} throw k =
-  f throw (fun () -> throw (Failure "stream empty")) k
+let next_expected t throw k =
+  (f t) throw (fun () -> throw (Failure "stream empty")) k
 
 let next_n n s throw k =
   if n < 0 then throw (Invalid_argument "n is negative")
@@ -36,19 +44,19 @@ let next_n n s throw k =
 
     iterate [] n
 
-let push ({f} as s) v = s.f <- fun _ _ k -> s.f <- f; k v
+let push ({ff} as s) v = s.ff <- fun _ _ k -> s.ff <- ff; k v
 
 let push_option s = function
   | None -> ()
   | Some v -> push s v
 
-let push_list ({f} as s) = function
+let push_list ({ff} as s) = function
   | [] -> ()
   | vs ->
     let remainder = ref vs in
-    s.f <- fun throw e k ->
+    s.ff <- fun throw e k ->
       match !remainder with
-      | [] -> s.f <- f; f throw e k
+      | [] -> s.ff <- ff; ff throw e k
       | v::vs -> remainder := vs; k v
 
 let peek s throw e k = next s throw e (fun v -> push s v; k v)
@@ -61,15 +69,15 @@ let peek_expected s throw k =
 
 let peek_n n s throw k = next_n n s throw (fun vs -> push_list s vs; k vs)
 
-let tap g ({f} as s) =
-  (s.f <- fun throw e k -> f throw e (fun v -> g v; k v));
-  fun () -> s.f <- f
+let tap g ({ff} as s) =
+  (s.ff <- fun throw e k -> ff throw e (fun v -> g v; k v));
+  fun () -> s.ff <- ff
 
 let checkpoint s =
   let buffer = ref [] in
   let s' =
     (fun throw e k ->
-      s.f throw e (fun v -> buffer := v::!buffer; k v))
+      (f s) throw e (fun v -> buffer := v::!buffer; k v))
     |> make
   in
   let restore () = push_list s (List.rev !buffer) in
