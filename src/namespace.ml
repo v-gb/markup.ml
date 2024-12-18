@@ -21,10 +21,9 @@ struct
   type context = context_entry ref
 
   let parse qualified_name =
-    try
-      let colon_index = String.index qualified_name ':' in
-      if colon_index = 0 then
-        raise Not_found;
+    match String.index_opt qualified_name ':' with
+    | None | Some 0 -> ("", qualified_name)
+    | Some colon_index ->
       let prefix = String.sub qualified_name 0 colon_index in
       let suffix =
         String.sub qualified_name
@@ -32,8 +31,6 @@ struct
           (String.length qualified_name - colon_index - 1)
       in
       prefix, suffix
-
-    with Not_found -> ("", qualified_name)
 
   let init top_level =
     let f = function
@@ -127,15 +124,13 @@ struct
     in
 
     let prefix =
-      try
-        Some (candidate_prefixes |> List.find (fun prefix ->
-          (allow_default || prefix <> "") &&
-           begin
-            try StringMap.find prefix !(fst context).prefix_to_namespace =
-              namespace
-            with Not_found -> false
-           end))
-      with Not_found -> None
+      candidate_prefixes |> List.find_opt (fun prefix ->
+        (allow_default || prefix <> "") &&
+         begin
+          try StringMap.find prefix !(fst context).prefix_to_namespace =
+            namespace
+          with Not_found -> false
+         end)
     in
 
     let prefix =
